@@ -1,0 +1,101 @@
+// ✅ Cleaned up
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int          @id @default(autoincrement())
+  email        String       @unique
+  password     String
+  // REVISED: Changed from Role to String to support SQLite
+  role         String       @default("ADVOCATE")  
+  diaryEntries DiaryEntry[]
+  fullName     String
+  advocate     Advocate?
+  createdAt    DateTime     @default(now()) 
+  updatedAt    DateTime     @updatedAt	
+}
+
+model Advocate {
+  id             Int          @id @default(autoincrement())
+  userId         Int          @unique
+  user           User         @relation(fields: [userId], references: [id])
+  barNumber      String
+  phone          String?
+  specialization String? 
+  cases          CaseFile[]
+  schedules      Schedule[]
+}
+
+model Client {
+  id        Int          @id @default(autoincrement())
+  fullName  String
+  email     String?
+  phone     String? 
+  address   String?
+  cases     CaseFile[] 
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model CaseFile {
+  id           Int          @id @default(autoincrement())
+  title        String
+  description  String?
+  // REVISED: Changed from CaseStatus to String to support SQLite
+  status       String       @default("PENDING") 
+  court        String?
+  nextHearing  DateTime? 
+  advocateId   Int
+  clientId     Int
+  advocate     Advocate     @relation(fields: [advocateId], references: [id])
+  client       Client       @relation(fields: [clientId], references: [id])
+  diaryEntries DiaryEntry[]
+  schedules    Schedule[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Schedule {
+  id          Int       @id @default(autoincrement()) 
+  title       String
+  description String? 
+  start       DateTime
+  end         DateTime
+  caseId      Int
+  caseFile    CaseFile  @relation(fields: [caseId], references: [id])
+  advocateId  Int
+  advocate    Advocate  @relation(fields: [advocateId], references: [id])
+  reminders   Reminder[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Reminder {
+  id          Int       @id @default(autoincrement())
+  scheduleId  Int
+  schedule    Schedule  @relation(fields: [scheduleId], references: [id]) 
+  sendAt      DateTime
+  // REVISED: Changed from ReminderChannel to String to support SQLite
+  channel     String
+  message     String
+}
+
+model DiaryEntry {
+  id          Int      @id @default(autoincrement())
+  caseId      Int
+  caseFile    CaseFile  @relation(fields: [caseId], references: [id])
+  date        DateTime
+  notes       String
+  createdById Int
+  createdBy   User      @relation(fields: [createdById], references: [id]) 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// NOTE: The original ENUM blocks have been removed from here.

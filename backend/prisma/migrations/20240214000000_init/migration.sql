@@ -1,0 +1,86 @@
+PRAGMA foreign_keys=OFF;
+
+CREATE TABLE "User" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "email" TEXT NOT NULL,
+  "password" TEXT NOT NULL,
+  "role" TEXT NOT NULL,
+  "fullName" TEXT NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL
+);
+
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+CREATE TABLE "Advocate" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "userId" INTEGER NOT NULL,
+  "barNumber" TEXT NOT NULL,
+  "phone" TEXT,
+  "specialization" TEXT,
+  CONSTRAINT "Advocate_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE UNIQUE INDEX "Advocate_userId_key" ON "Advocate"("userId");
+
+CREATE TABLE "Client" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "fullName" TEXT NOT NULL,
+  "email" TEXT,
+  "phone" TEXT,
+  "address" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL
+);
+
+CREATE TABLE "CaseFile" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "title" TEXT NOT NULL,
+  "description" TEXT,
+  "status" TEXT NOT NULL DEFAULT 'PENDING',
+  "court" TEXT,
+  "nextHearing" DATETIME,
+  "advocateId" INTEGER NOT NULL,
+  "clientId" INTEGER NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL,
+  CONSTRAINT "CaseFile_advocateId_fkey" FOREIGN KEY ("advocateId") REFERENCES "Advocate" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT "CaseFile_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "Client" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE "Schedule" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "title" TEXT NOT NULL,
+  "description" TEXT,
+  "start" DATETIME NOT NULL,
+  "end" DATETIME NOT NULL,
+  "caseId" INTEGER NOT NULL,
+  "advocateId" INTEGER NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL,
+  CONSTRAINT "Schedule_caseId_fkey" FOREIGN KEY ("caseId") REFERENCES "CaseFile" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "Schedule_advocateId_fkey" FOREIGN KEY ("advocateId") REFERENCES "Advocate" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "Reminder" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "scheduleId" INTEGER NOT NULL,
+  "sendAt" DATETIME NOT NULL,
+  "channel" TEXT NOT NULL,
+  "message" TEXT NOT NULL,
+  CONSTRAINT "Reminder_scheduleId_fkey" FOREIGN KEY ("scheduleId") REFERENCES "Schedule" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "DiaryEntry" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "caseId" INTEGER NOT NULL,
+  "date" DATETIME NOT NULL,
+  "notes" TEXT NOT NULL,
+  "createdById" INTEGER NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL,
+  CONSTRAINT "DiaryEntry_caseId_fkey" FOREIGN KEY ("caseId") REFERENCES "CaseFile" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "DiaryEntry_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+PRAGMA foreign_keys=ON;
